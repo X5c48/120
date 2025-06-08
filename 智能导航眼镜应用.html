@@ -1,0 +1,2543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能导航眼镜</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:'#4F46E5',secondary:'#10B981'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAFA;
+        }
+        .emergency-button {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+        .map-container {
+            background-image: url('https://public.readdy.ai/gen_page/map_placeholder_1280x720.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .second-level, .third-level {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+    <!-- 顶部导航栏 -->
+    <nav class="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+            <button id="back-button" class="hidden mr-2 w-8 h-8 flex items-center justify-center cursor-pointer">
+                <i class="ri-arrow-left-s-line ri-lg"></i>
+            </button>
+            <div class="font-['Pacifico'] text-primary text-xl">logo</div>
+        </div>
+        <button class="emergency-button bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center cursor-pointer">
+            <i class="ri-alarm-warning-line ri-lg mr-1"></i>
+            紧急求助
+        </button>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="mt-16 mb-16 min-h-[700px]">
+        <!-- 导航定位模块 - 一级界面 -->
+        <div id="navigation-tab" class="tab-content active">
+            <div id="navigation-level-1" class="first-level">
+                <!-- 地图区域 -->
+                <div class="map-container h-64 w-full relative overflow-hidden">
+                    <div class="absolute bottom-4 right-4 bg-white p-2 rounded-lg shadow-md cursor-pointer">
+                        <i class="ri-focus-3-line ri-lg text-primary"></i>
+                    </div>
+                </div>
+                
+                <!-- 搜索框 -->
+                <div class="px-4 py-3">
+                    <div class="relative">
+                        <input type="text" placeholder="搜索目的地" class="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-button border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                        <i class="ri-search-line ri-lg absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                    </div>
+                </div>
+                
+                <!-- 常用地点 -->
+                <div class="px-4 py-2">
+                    <h3 class="text-lg font-medium mb-3">常用地点</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer nav-to-level2" data-target="home">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-home-5-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">家</p>
+                                    <p class="text-xs text-gray-500">杭州市西湖区文一西路 98 号</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer nav-to-level2" data-target="work">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-briefcase-4-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">公司</p>
+                                    <p class="text-xs text-gray-500">杭州市余杭区五常街道</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 最近导航 -->
+                <div class="px-4 py-2">
+                    <h3 class="text-lg font-medium mb-3">最近导航</h3>
+                    <div class="space-y-3">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer nav-to-level2" data-target="recent1">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-map-pin-line ri-lg text-gray-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">西湖风景区</p>
+                                    <p class="text-xs text-gray-500">杭州市西湖区龙井路 1 号</p>
+                                </div>
+                                <div class="ml-auto text-xs text-gray-500">
+                                    昨天
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer nav-to-level2" data-target="recent2">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-store-2-line ri-lg text-gray-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">杭州东站</p>
+                                    <p class="text-xs text-gray-500">杭州市江干区天城东路</p>
+                                </div>
+                                <div class="ml-auto text-xs text-gray-500">
+                                    3 天前
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 导航定位模块 - 二级界面 -->
+            <div id="navigation-level-2" class="second-level px-4 py-3">
+                <div class="map-container h-48 w-full relative overflow-hidden rounded-lg mb-4">
+                    <div class="absolute bottom-4 right-4 bg-white p-2 rounded-lg shadow-md cursor-pointer">
+                        <i class="ri-focus-3-line ri-lg text-primary"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                    <div class="flex items-center mb-3">
+                        <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="ri-map-pin-line ri-lg text-primary"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">起点</p>
+                            <p class="font-medium">当前位置</p>
+                        </div>
+                    </div>
+                    <div class="w-0.5 h-6 bg-gray-200 ml-4"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="ri-map-pin-fill ri-lg text-red-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">终点</p>
+                            <p class="font-medium" id="destination-name">西湖风景区</p>
+                            <p class="text-xs text-gray-500" id="destination-address">杭州市西湖区龙井路 1 号</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                    <h3 class="font-medium mb-3">出行方式</h3>
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="flex flex-col items-center cursor-pointer transport-mode active">
+                            <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-walk-line ri-lg text-primary"></i>
+                            </div>
+                            <p class="text-xs">步行</p>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer transport-mode">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-bike-line ri-lg text-gray-600"></i>
+                            </div>
+                            <p class="text-xs">骑行</p>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer transport-mode">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-taxi-line ri-lg text-gray-600"></i>
+                            </div>
+                            <p class="text-xs">驾车</p>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer transport-mode">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-bus-line ri-lg text-gray-600"></i>
+                            </div>
+                            <p class="text-xs">公交</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-medium">路线详情</h3>
+                        <div class="text-sm text-primary">
+                            <span>3.2 公里</span>
+                            <span class="mx-1">·</span>
+                            <span>42 分钟</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="ri-walk-line ri-sm text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">沿文一西路向东步行 800 米</p>
+                                <p class="text-xs text-gray-500">预计 10 分钟</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="ri-arrow-right-line ri-sm text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">右转进入天目山路</p>
+                                <p class="text-xs text-gray-500">预计 15 分钟</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="ri-arrow-left-line ri-sm text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">左转进入玉古路</p>
+                                <p class="text-xs text-gray-500">预计 12 分钟</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                <i class="ri-map-pin-fill ri-sm text-red-500"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">到达目的地</p>
+                                <p class="text-xs text-gray-500">西湖风景区</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer nav-to-level3" data-target="navigation">
+                    开始导航
+                </button>
+            </div>
+            
+            <!-- 导航定位模块 - 三级界面 -->
+            <div id="navigation-level-3" class="third-level">
+                <div class="map-container h-[500px] w-full relative overflow-hidden">
+                    <div class="absolute top-4 right-4 bg-white p-2 rounded-lg shadow-md cursor-pointer">
+                        <i class="ri-focus-3-line ri-lg text-primary"></i>
+                    </div>
+                    
+                    <!-- 导航信息卡片 -->
+                    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-medium">西湖风景区</h3>
+                                <p class="text-xs text-gray-500">预计 42 分钟到达</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                                    <i class="ri-volume-up-line ri-lg text-gray-600"></i>
+                                </button>
+                                <button class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center cursor-pointer">
+                                    <i class="ri-close-line ri-lg text-red-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center bg-gray-50 p-3 rounded-lg mb-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-arrow-right-line ri-lg text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">右转进入天目山路</p>
+                                <p class="text-xs text-gray-500">300 米后</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-gray-50 p-2 rounded-lg flex flex-col items-center cursor-pointer">
+                                <i class="ri-gas-station-line ri-lg text-gray-600 mb-1"></i>
+                                <p class="text-xs">加油站</p>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded-lg flex flex-col items-center cursor-pointer">
+                                <i class="ri-restaurant-line ri-lg text-gray-600 mb-1"></i>
+                                <p class="text-xs">餐厅</p>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded-lg flex flex-col items-center cursor-pointer">
+                                <i class="ri-parking-line ri-lg text-gray-600 mb-1"></i>
+                                <p class="text-xs">停车场</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 安全事项提醒模块 - 一级界面 -->
+        <div id="safety-tab" class="tab-content">
+            <div id="safety-level-1" class="first-level px-4 py-3">
+                <!-- 天气状况 -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-medium">杭州市 · 今日天气</h3>
+                        <span class="text-sm">2025-06-04</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="ri-sun-line ri-3x mr-3"></i>
+                            <div>
+                                <p class="text-2xl font-bold">26°C</p>
+                                <p class="text-sm">晴朗</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm">湿度: 65%</p>
+                            <p class="text-sm">风速: 3.5 m/s</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 安全预警 -->
+                <h3 class="text-lg font-medium mb-3">安全预警</h3>
+                <div class="space-y-3 mb-4">
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer safety-to-level2" data-target="traffic">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-road-map-line ri-lg text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">交通拥堵预警</p>
+                                <p class="text-xs text-gray-500">西湖大道与文一西路交叉口</p>
+                            </div>
+                            <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer safety-to-level2" data-target="construction">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-hammer-line ri-lg text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">道路施工预警</p>
+                                <p class="text-xs text-gray-500">天目山路段施工，注意绕行</p>
+                            </div>
+                            <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 危险区域提醒 -->
+                <h3 class="text-lg font-medium mb-3">危险区域提醒</h3>
+                <div class="space-y-3 mb-4">
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer safety-to-level2" data-target="danger">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-alert-line ri-lg text-red-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">高风险区域</p>
+                                <p class="text-xs text-gray-500">钱塘江沿岸，近期水位上涨</p>
+                            </div>
+                            <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 紧急联系人 -->
+                <h3 class="text-lg font-medium mb-3">紧急联系人</h3>
+                <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-user-3-line ri-lg text-primary"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">刘明</p>
+                                <p class="text-xs text-gray-500">配偶</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center cursor-pointer">
+                                <i class="ri-phone-line ri-lg text-green-600"></i>
+                            </button>
+                            <button class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer">
+                                <i class="ri-message-2-line ri-lg text-blue-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-user-3-line ri-lg text-primary"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">张伟</p>
+                                <p class="text-xs text-gray-500">子女</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center cursor-pointer">
+                                <i class="ri-phone-line ri-lg text-green-600"></i>
+                            </button>
+                            <button class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center cursor-pointer">
+                                <i class="ri-message-2-line ri-lg text-blue-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="w-full bg-white border border-primary text-primary py-3 rounded-button font-medium mb-4 cursor-pointer">
+                    添加紧急联系人
+                </button>
+            </div>
+            
+            <!-- 安全事项提醒模块 - 二级界面 -->
+            <div id="safety-level-2" class="second-level px-4 py-3">
+                <div id="traffic-warning" class="warning-detail">
+                    <div class="bg-yellow-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-road-map-line ri-lg text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium">交通拥堵预警</h3>
+                                <p class="text-xs text-gray-500">西湖大道与文一西路交叉口</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            当前位置前方 500 米处交通拥堵，预计延误时间 15-20 分钟。建议选择替代路线避开拥堵区域。
+                        </p>
+                        <div class="map-container h-40 w-full relative overflow-hidden rounded-lg mb-3"></div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">应对建议</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-route-line ri-lg text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">选择替代路线</p>
+                                    <p class="text-sm text-gray-600">可从天目山路绕行，预计增加距离 1.2 公里，但可节省 10 分钟</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-time-line ri-lg text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">延迟出发</p>
+                                    <p class="text-sm text-gray-600">预计拥堵将在 30 分钟后缓解，可适当推迟出发时间</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mb-4">
+                        <button class="flex-1 bg-primary text-white py-3 rounded-button font-medium cursor-pointer safety-to-level3" data-target="traffic">
+                            查看安全路线
+                        </button>
+                        <button class="flex-1 bg-white border border-primary text-primary py-3 rounded-button font-medium cursor-pointer">
+                            一键求助
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="construction-warning" class="warning-detail hidden">
+                    <div class="bg-orange-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-hammer-line ri-lg text-orange-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium">道路施工预警</h3>
+                                <p class="text-xs text-gray-500">天目山路段施工，注意绕行</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            天目山路杭州师范大学路段正在进行道路维修，预计施工期为 6 月 1 日至 6 月 15 日。施工期间该路段单向通行，请注意减速慢行。
+                        </p>
+                        <div class="map-container h-40 w-full relative overflow-hidden rounded-lg mb-3"></div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">应对建议</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-route-line ri-lg text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">绕行建议</p>
+                                    <p class="text-sm text-gray-600">可从文一西路-古墩路-文二西路绕行，避开施工区域</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-error-warning-line ri-lg text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">安全提示</p>
+                                    <p class="text-sm text-gray-600">如必须通过施工路段，请注意减速慢行，保持安全距离</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mb-4">
+                        <button class="flex-1 bg-primary text-white py-3 rounded-button font-medium cursor-pointer safety-to-level3" data-target="construction">
+                            查看安全路线
+                        </button>
+                        <button class="flex-1 bg-white border border-primary text-primary py-3 rounded-button font-medium cursor-pointer">
+                            一键求助
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="danger-warning" class="warning-detail hidden">
+                    <div class="bg-red-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-alert-line ri-lg text-red-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium">高风险区域</h3>
+                                <p class="text-xs text-gray-500">钱塘江沿岸，近期水位上涨</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            近期持续降雨，钱塘江水位已达警戒线，沿岸部分区域存在洪水风险。请避免前往江边游玩，注意人身安全。
+                        </p>
+                        <div class="map-container h-40 w-full relative overflow-hidden rounded-lg mb-3"></div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">应对建议</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-forbid-line ri-lg text-red-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">避免前往</p>
+                                    <p class="text-sm text-gray-600">近期请勿前往钱塘江沿岸区域，特别是江滨公园、钱江新城沿江路段</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-information-line ri-lg text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">关注预警</p>
+                                    <p class="text-sm text-gray-600">持续关注气象部门发布的洪水预警信息，及时调整出行计划</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mb-4">
+                        <button class="flex-1 bg-primary text-white py-3 rounded-button font-medium cursor-pointer safety-to-level3" data-target="danger">
+                            查看安全区域
+                        </button>
+                        <button class="flex-1 bg-white border border-primary text-primary py-3 rounded-button font-medium cursor-pointer">
+                            一键求助
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 安全事项提醒模块 - 三级界面 -->
+            <div id="safety-level-3" class="third-level">
+                <div id="traffic-safe-route" class="safe-route">
+                    <div class="map-container h-[400px] w-full relative overflow-hidden">
+                        <div class="absolute top-4 right-4 bg-white p-2 rounded-lg shadow-md cursor-pointer">
+                            <i class="ri-focus-3-line ri-lg text-primary"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="px-4 py-3">
+                        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                            <h3 class="font-medium mb-3">安全路线推荐</h3>
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="ri-route-line ri-lg text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">最佳绕行路线</p>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-primary">
+                                    <span>4.5 公里</span>
+                                    <span class="mx-1">·</span>
+                                    <span>25 分钟</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex items-start">
+                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                        <i class="ri-arrow-right-line ri-sm text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">沿文一西路向东直行</p>
+                                        <p class="text-xs text-gray-500">1.2 公里</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                        <i class="ri-arrow-right-line ri-sm text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">右转进入古墩路</p>
+                                        <p class="text-xs text-gray-500">1.5 公里</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                        <i class="ri-arrow-left-line ri-sm text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">左转进入文二西路</p>
+                                        <p class="text-xs text-gray-500">1.8 公里</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-yellow-50 p-3 rounded-lg mb-4">
+                                <div class="flex items-start">
+                                    <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                        <i class="ri-information-line ri-sm text-yellow-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">安全提示</p>
+                                        <p class="text-sm text-gray-600">此路线已避开拥堵区域，预计可节省 15 分钟行程时间</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <button class="flex-1 bg-primary text-white py-3 rounded-button font-medium cursor-pointer">
+                                    开始导航
+                                </button>
+                                <button class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-button font-medium cursor-pointer">
+                                    保存路线
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-lg font-medium mb-3">历史预警记录</h3>
+                        <div class="space-y-3 mb-4">
+                            <div class="bg-white shadow-sm rounded-lg p-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="ri-hammer-line ri-lg text-orange-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium">道路施工预警</p>
+                                            <p class="text-xs text-gray-500">文一西路</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500">2025-06-01</p>
+                                </div>
+                            </div>
+                            <div class="bg-white shadow-sm rounded-lg p-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="ri-cloud-windy-line ri-lg text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium">恶劣天气预警</p>
+                                            <p class="text-xs text-gray-500">暴雨预警</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500">2025-05-28</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="construction-safe-route" class="safe-route hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="danger-safe-route" class="safe-route hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 健康检测模块 - 一级界面 -->
+        <div id="health-tab" class="tab-content">
+            <div id="health-level-1" class="first-level px-4 py-3">
+                <!-- 健康概览 -->
+                <div class="bg-gradient-to-r from-primary to-indigo-600 rounded-lg p-4 text-white mb-4">
+                    <h3 class="font-medium mb-3">今日健康概览</h3>
+                    <div class="flex justify-between mb-3">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-heart-pulse-line ri-lg text-white"></i>
+                            </div>
+                            <p class="text-sm">心率</p>
+                            <p class="font-bold">72 次/分</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-walk-line ri-lg text-white"></i>
+                            </div>
+                            <p class="text-sm">步数</p>
+                            <p class="font-bold">6,842</p>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-1">
+                                <i class="ri-zzz-line ri-lg text-white"></i>
+                            </div>
+                            <p class="text-sm">睡眠</p>
+                            <p class="font-bold">7.5 小时</p>
+                        </div>
+                    </div>
+                    <div class="w-full bg-white/20 h-1.5 rounded-full mb-1">
+                        <div class="bg-white h-full rounded-full" style="width: 85%"></div>
+                    </div>
+                    <p class="text-xs text-right">健康状态良好 (85%)</p>
+                </div>
+                
+                <!-- 健康检测项目 -->
+                <h3 class="text-lg font-medium mb-3">健康检测</h3>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer health-to-level2" data-target="heart">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-2">
+                                <i class="ri-heart-pulse-line ri-lg text-red-600"></i>
+                            </div>
+                            <p class="font-medium">心率监测</p>
+                            <p class="text-xs text-gray-500">72 次/分 · 正常</p>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer health-to-level2" data-target="blood">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
+                                <i class="ri-pulse-line ri-lg text-blue-600"></i>
+                            </div>
+                            <p class="font-medium">血压监测</p>
+                            <p class="text-xs text-gray-500">120/80 mmHg</p>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer health-to-level2" data-target="fatigue">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-2">
+                                <i class="ri-emotion-sad-line ri-lg text-yellow-600"></i>
+                            </div>
+                            <p class="font-medium">疲劳度检测</p>
+                            <p class="text-xs text-gray-500">轻度疲劳</p>
+                        </div>
+                    </div>
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer health-to-level2" data-target="steps">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                                <i class="ri-walk-line ri-lg text-green-600"></i>
+                            </div>
+                            <p class="font-medium">步数统计</p>
+                            <p class="text-xs text-gray-500">6,842 步</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 健康建议 -->
+                <h3 class="text-lg font-medium mb-3">健康建议</h3>
+                <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+                    <div class="flex items-start mb-3">
+                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3 mt-1">
+                            <i class="ri-sun-line ri-lg text-primary"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">今日建议</p>
+                            <p class="text-sm text-gray-600">根据您的健康数据，建议适当增加户外活动时间，保持充分水分摄入。</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3 mt-1">
+                            <i class="ri-rest-time-line ri-lg text-primary"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">休息提醒</p>
+                            <p class="text-sm text-gray-600">检测到您已连续走动 2 小时，建议适当休息 10-15 分钟。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 健康检测模块 - 二级界面 -->
+            <div id="health-level-2" class="second-level px-4 py-3">
+                <div id="heart-detail" class="health-detail">
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-heart-pulse-line ri-lg text-red-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">心率监测</h3>
+                                    <p class="text-xs text-gray-500">实时监测</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-red-600">72</p>
+                                <p class="text-xs text-gray-500">次/分钟</p>
+                            </div>
+                        </div>
+                        
+                        <div class="h-48 w-full mb-4" id="heart-chart"></div>
+                        
+                        <div class="flex justify-between text-xs text-gray-500 mb-3">
+                            <span>06:00</span>
+                            <span>12:00</span>
+                            <span>18:00</span>
+                            <span>现在</span>
+                        </div>
+                        
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-check-line ri-sm text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">状态正常</p>
+                                    <p class="text-sm text-gray-600">您的心率在正常范围内（60-100 次/分钟）</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">心率区间</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="font-medium">休息心率</p>
+                                <p class="text-sm">60-70 次/分</p>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1.5 rounded-full">
+                                <div class="bg-green-500 h-full rounded-full" style="width: 30%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="font-medium">轻度活动</p>
+                                <p class="text-sm">70-90 次/分</p>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1.5 rounded-full">
+                                <div class="bg-blue-500 h-full rounded-full" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="font-medium">中度活动</p>
+                                <p class="text-sm">90-120 次/分</p>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1.5 rounded-full">
+                                <div class="bg-yellow-500 h-full rounded-full" style="width: 15%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="font-medium">剧烈运动</p>
+                                <p class="text-sm">120+ 次/分</p>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1.5 rounded-full">
+                                <div class="bg-red-500 h-full rounded-full" style="width: 5%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer health-to-level3" data-target="heart">
+                        查看详细分析
+                    </button>
+                </div>
+                
+                <div id="blood-detail" class="health-detail hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-pulse-line ri-lg text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">血压监测</h3>
+                                    <p class="text-xs text-gray-500">最近测量: 今天 10:30</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-blue-600">120/80</p>
+                                <p class="text-xs text-gray-500">mmHg</p>
+                            </div>
+                        </div>
+                        
+                        <div class="h-48 w-full mb-4" id="blood-chart"></div>
+                        
+                        <div class="flex justify-between text-xs text-gray-500 mb-3">
+                            <span>周一</span>
+                            <span>周三</span>
+                            <span>周五</span>
+                            <span>今天</span>
+                        </div>
+                        
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-check-line ri-sm text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">状态正常</p>
+                                    <p class="text-sm text-gray-600">您的血压在理想范围内（收缩压 90-120，舒张压 60-80）</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">血压记录</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">今天 10:30</p>
+                                    <p class="text-xs text-gray-500">休息状态</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-blue-600">120/80 mmHg</p>
+                                    <p class="text-xs text-green-600">正常</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">昨天 20:15</p>
+                                    <p class="text-xs text-gray-500">晚饭后</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-blue-600">125/82 mmHg</p>
+                                    <p class="text-xs text-green-600">正常</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">前天 08:45</p>
+                                    <p class="text-xs text-gray-500">早晨起床后</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-blue-600">118/78 mmHg</p>
+                                    <p class="text-xs text-green-600">正常</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer health-to-level3" data-target="blood">
+                        查看详细分析
+                    </button>
+                </div>
+                
+                <div id="fatigue-detail" class="health-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="steps-detail" class="health-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+            
+            <!-- 健康检测模块 - 三级界面 -->
+            <div id="health-level-3" class="third-level px-4 py-3">
+                <div id="heart-analysis" class="health-analysis">
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">心率分析报告</h3>
+                        <div class="h-48 w-full mb-4" id="heart-analysis-chart"></div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-check-line ri-lg text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">总体评估: 良好</p>
+                                    <p class="text-sm text-gray-600">您的心率在过去 30 天内保持稳定，未发现异常波动</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-information-line ri-lg text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">平均静息心率: 65 次/分</p>
+                                    <p class="text-sm text-gray-600">处于健康成年人的理想范围内（60-70 次/分）</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-eye-line ri-lg text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">观察发现</p>
+                                    <p class="text-sm text-gray-600">在下午 3-5 点期间，心率略有升高，可能与日常活动相关</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">健康建议</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-heart-3-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">保持良好生活习惯</p>
+                                    <p class="text-sm text-gray-600">继续保持规律作息，避免熬夜，保证充足睡眠</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-walk-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">适量运动</p>
+                                    <p class="text-sm text-gray-600">每周进行 3-5 次中等强度有氧运动，每次 30 分钟</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-restaurant-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">健康饮食</p>
+                                    <p class="text-sm text-gray-600">减少高盐、高脂食物摄入，增加蔬果摄入量</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">检测参数设置</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm">自动检测频率</p>
+                                <div class="relative">
+                                    <select class="appearance-none bg-gray-100 px-3 py-2 pr-8 rounded-lg text-sm">
+                                        <option>每 30 分钟</option>
+                                        <option selected>每小时</option>
+                                        <option>每 2 小时</option>
+                                    </select>
+                                    <div class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                        <i class="ri-arrow-down-s-line ri-lg text-gray-500"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm">异常心率提醒</p>
+                                <div class="relative inline-block w-12 h-6">
+                                    <input type="checkbox" id="heart-alert" class="opacity-0 absolute w-full h-full cursor-pointer" checked>
+                                    <label for="heart-alert" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer">
+                                        <span class="block h-6 w-6 rounded-full bg-white transform translate-x-0 transition-transform duration-200 ease-in-out"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm">数据同步到健康档案</p>
+                                <div class="relative inline-block w-12 h-6">
+                                    <input type="checkbox" id="heart-sync" class="opacity-0 absolute w-full h-full cursor-pointer" checked>
+                                    <label for="heart-sync" class="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer">
+                                        <span class="block h-6 w-6 rounded-full bg-white transform translate-x-0 transition-transform duration-200 ease-in-out"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-white border border-primary text-primary py-3 rounded-button font-medium mb-4 cursor-pointer">
+                        咨询专业医生
+                    </button>
+                </div>
+                
+                <div id="blood-analysis" class="health-analysis hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="fatigue-analysis" class="health-analysis hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="steps-analysis" class="health-analysis hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用药提醒模块 - 一级界面 -->
+        <div id="medication-tab" class="tab-content">
+            <div id="medication-level-1" class="first-level px-4 py-3">
+                <!-- 今日用药提醒 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-medium">今日用药提醒</h3>
+                        <p class="text-sm text-gray-500">2025-06-04</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center p-3 bg-yellow-50 rounded-lg">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-medicine-bottle-line ri-lg text-yellow-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium">降压药</p>
+                                    <p class="text-xs bg-primary text-white px-2 py-0.5 rounded-full">即将服用</p>
+                                </div>
+                                <p class="text-xs text-gray-500">12:00 · 午餐后</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-capsule-line ri-lg text-gray-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium">维生素</p>
+                                    <p class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">已服用</p>
+                                </div>
+                                <p class="text-xs text-gray-500">08:00 · 早餐后</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-medicine-bottle-line ri-lg text-gray-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <p class="font-medium">降压药</p>
+                                    <p class="text-xs text-gray-500">待服用</p>
+                                </div>
+                                <p class="text-xs text-gray-500">19:00 · 晚餐后</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 药品清单 -->
+                <h3 class="text-lg font-medium mb-3">药品清单</h3>
+                <div class="space-y-3 mb-4">
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer medication-to-level2" data-target="med1">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-medicine-bottle-line ri-lg text-primary"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">厄贝沙坦片</p>
+                                <p class="text-xs text-gray-500">降压药 · 每日 2 次</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">剩余</p>
+                                <p class="font-medium">15 片</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer medication-to-level2" data-target="med2">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-capsule-line ri-lg text-primary"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">复合维生素片</p>
+                                <p class="text-xs text-gray-500">维生素补充 · 每日 1 次</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">剩余</p>
+                                <p class="font-medium">28 片</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer medication-to-level2" data-target="med3">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-medicine-bottle-line ri-lg text-primary"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">阿司匹林</p>
+                                <p class="text-xs text-gray-500">抗凝药 · 每日 1 次</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-red-500">库存不足</p>
+                                <p class="font-medium">2 片</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer">
+                    添加新药品
+                </button>
+            </div>
+            
+            <!-- 用药提醒模块 - 二级界面 -->
+            <div id="medication-level-2" class="second-level px-4 py-3">
+                <div id="med1-detail" class="medication-detail">
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                <i class="ri-medicine-bottle-line ri-xl text-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium">厄贝沙坦片</h3>
+                                <p class="text-xs text-gray-500">降压药 · 75mg</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between">
+                                <p class="text-sm text-gray-500">服用频率</p>
+                                <p class="text-sm">每日 2 次</p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p class="text-sm text-gray-500">服用时间</p>
+                                <p class="text-sm">早餐后、晚餐后</p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p class="text-sm text-gray-500">剩余数量</p>
+                                <p class="text-sm">15 片</p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p class="text-sm text-gray-500">预计可用</p>
+                                <p class="text-sm">7 天</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-3 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-information-line ri-sm text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">注意事项</p>
+                                    <p class="text-sm text-gray-600">请在医生指导下服用，不可自行调整剂量。服药期间请定期监测血压。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">服药记录</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">今天 08:15</p>
+                                    <p class="text-xs text-gray-500">早餐后</p>
+                                </div>
+                                <p class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">已服用</p>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">昨天 19:30</p>
+                                    <p class="text-xs text-gray-500">晚餐后</p>
+                                </div>
+                                <p class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">已服用</p>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">昨天 08:05</p>
+                                    <p class="text-xs text-gray-500">早餐后</p>
+                                </div>
+                                <p class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">已服用</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 mb-4">
+                        <button class="flex-1 bg-primary text-white py-3 rounded-button font-medium cursor-pointer medication-to-level3" data-target="med1">
+                            查看详情
+                        </button>
+                        <button class="flex-1 bg-white border border-primary text-primary py-3 rounded-button font-medium cursor-pointer">
+                            编辑提醒
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="med2-detail" class="medication-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="med3-detail" class="medication-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+            
+            <!-- 用药提醒模块 - 三级界面 -->
+            <div id="medication-level-3" class="third-level px-4 py-3">
+                <div id="med1-analysis" class="medication-analysis">
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">用药分析报告</h3>
+                        <div class="h-48 w-full mb-4" id="medication-chart"></div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-check-line ri-lg text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">服药依从性: 良好</p>
+                                    <p class="text-sm text-gray-600">过去 30 天内，您的服药依从率为 96%，继续保持</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-heart-pulse-line ri-lg text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">血压控制: 有效</p>
+                                    <p class="text-sm text-gray-600">服药期间，您的血压维持在理想范围内</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">药品说明书</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="font-medium text-sm">【药品名称】</p>
+                                <p class="text-sm text-gray-600">通用名称：厄贝沙坦片</p>
+                                <p class="text-sm text-gray-600">商品名称：安博诺</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">【主要成分】</p>
+                                <p class="text-sm text-gray-600">每片含厄贝沙坦 75mg</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">【适应症】</p>
+                                <p class="text-sm text-gray-600">用于治疗原发性高血压。可单独使用或与其他抗高血压药物联合使用。</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">【不良反应】</p>
+                                <p class="text-sm text-gray-600">常见不良反应包括头痛、头晕、疲劳等。如出现严重不良反应，请立即就医。</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">药物相互作用</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-alert-line ri-lg text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">与利尿剂</p>
+                                    <p class="text-sm text-gray-600">合用可能增强降压效果，需在医生指导下调整剂量</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                                    <i class="ri-alert-line ri-lg text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">与非甾体抗炎药</p>
+                                    <p class="text-sm text-gray-600">如布洛芬等可能降低厄贝沙坦的降压效果</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <h3 class="font-medium mb-3">附近药店</h3>
+                        <div class="map-container h-40 w-full relative overflow-hidden rounded-lg mb-3"></div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="ri-store-2-line ri-lg text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">同仁堂药店</p>
+                                        <p class="text-xs text-gray-500">500 米 · 营业中</p>
+                                    </div>
+                                </div>
+                                <button class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center cursor-pointer">
+                                    <i class="ri-map-pin-line ri-lg text-primary"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="ri-store-2-line ri-lg text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">益丰大药房</p>
+                                        <p class="text-xs text-gray-500">800 米 · 营业中</p>
+                                    </div>
+                                </div>
+                                <button class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center cursor-pointer">
+                                    <i class="ri-map-pin-line ri-lg text-primary"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="med2-analysis" class="medication-analysis hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="med3-analysis" class="medication-analysis hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 个人中心模块 - 一级界面 -->
+        <div id="profile-tab" class="tab-content">
+            <div id="profile-level-1" class="first-level">
+                <!-- 用户信息卡片 -->
+                <div class="bg-gradient-to-r from-primary to-indigo-600 p-4 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mr-4">
+                            <i class="ri-user-3-line ri-2x text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-lg">陈志强</h3>
+                            <p class="text-sm text-white/80">65 岁 · 男性</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <div class="bg-white/10 p-2 rounded-lg text-center">
+                            <p class="text-xs mb-1">设备状态</p>
+                            <p class="font-medium">已连接</p>
+                        </div>
+                        <div class="bg-white/10 p-2 rounded-lg text-center">
+                            <p class="text-xs mb-1">电池电量</p>
+                            <p class="font-medium">85%</p>
+                        </div>
+                        <div class="bg-white/10 p-2 rounded-lg text-center">
+                            <p class="text-xs mb-1">使用时长</p>
+                            <p class="font-medium">126 天</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 功能菜单 -->
+                <div class="px-4 py-3">
+                    <h3 class="text-lg font-medium mb-3">健康档案</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="health-record">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-file-list-3-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">健康档案</p>
+                                    <p class="text-xs text-gray-500">查看您的健康历史记录</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="medical-history">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-hospital-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">病史记录</p>
+                                    <p class="text-xs text-gray-500">管理您的疾病和治疗记录</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">设备管理</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="device">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-eye-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">智能眼镜设置</p>
+                                    <p class="text-xs text-gray-500">调整您的设备参数</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="notification">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-notification-3-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">通知设置</p>
+                                    <p class="text-xs text-gray-500">管理提醒和通知方式</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mb-3">账户与安全</h3>
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="personal">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-user-settings-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">个人信息</p>
+                                    <p class="text-xs text-gray-500">编辑您的基本信息</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="emergency">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-contacts-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">紧急联系人</p>
+                                    <p class="text-xs text-gray-500">管理您的紧急联系人</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer profile-to-level2" data-target="privacy">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-shield-keyhole-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">隐私设置</p>
+                                    <p class="text-xs text-gray-500">管理数据共享和隐私选项</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-question-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">帮助与反馈</p>
+                                    <p class="text-xs text-gray-500">获取支持或提交反馈</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                        <div class="bg-white shadow-sm rounded-lg p-3 cursor-pointer">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                    <i class="ri-settings-3-line ri-lg text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">系统设置</p>
+                                    <p class="text-xs text-gray-500">语言、主题和其他设置</p>
+                                </div>
+                                <i class="ri-arrow-right-s-line ri-lg text-gray-400 ml-auto"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full border border-gray-300 text-gray-700 py-3 rounded-button font-medium mb-4 cursor-pointer">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 个人中心模块 - 二级界面 -->
+            <div id="profile-level-2" class="second-level px-4 py-3">
+                <div id="personal-info" class="profile-detail">
+                    <h3 class="text-lg font-medium mb-4">个人信息</h3>
+                    
+                    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                        <div class="flex justify-center mb-4">
+                            <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
+                                <i class="ri-user-3-line ri-2x text-primary"></i>
+                                <div class="absolute bottom-0 right-0 w-6 h-6 bg-primary rounded-full flex items-center justify-center cursor-pointer">
+                                    <i class="ri-camera-line ri-sm text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">姓名</label>
+                                <input type="text" value="陈志强" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">性别</label>
+                                <div class="flex space-x-3">
+                                    <div class="flex items-center">
+                                        <input type="radio" id="male" name="gender" class="mr-2" checked>
+                                        <label for="male">男</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="radio" id="female" name="gender" class="mr-2">
+                                        <label for="female">女</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">年龄</label>
+                                <input type="number" value="65" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">手机号码</label>
+                                <input type="tel" value="138****5678" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">身份证号</label>
+                                <input type="text" value="330************1234" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer profile-to-level3" data-target="personal">
+                        保存修改
+                    </button>
+                </div>
+                
+                <div id="emergency-contacts" class="profile-detail hidden">
+                    <h3 class="text-lg font-medium mb-4">紧急联系人</h3>
+                    
+                    <div class="space-y-3 mb-4">
+                        <div class="bg-white shadow-sm rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="ri-user-3-line ri-lg text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">刘明</p>
+                                        <p class="text-xs text-gray-500">配偶 · 137****4567</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                                        <i class="ri-edit-line ri-lg text-gray-600"></i>
+                                    </button>
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                                        <i class="ri-delete-bin-line ri-lg text-gray-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-green-100 text-green-600 py-2 rounded-lg text-sm font-medium cursor-pointer">
+                                    <i class="ri-phone-line ri-lg align-bottom mr-1"></i>
+                                    电话
+                                </button>
+                                <button class="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg text-sm font-medium cursor-pointer">
+                                    <i class="ri-message-2-line ri-lg align-bottom mr-1"></i>
+                                    短信
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white shadow-sm rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="ri-user-3-line ri-lg text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">张伟</p>
+                                        <p class="text-xs text-gray-500">子女 · 139****8765</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                                        <i class="ri-edit-line ri-lg text-gray-600"></i>
+                                    </button>
+                                    <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                                        <i class="ri-delete-bin-line ri-lg text-gray-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-green-100 text-green-600 py-2 rounded-lg text-sm font-medium cursor-pointer">
+                                    <i class="ri-phone-line ri-lg align-bottom mr-1"></i>
+                                    电话
+                                </button>
+                                <button class="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg text-sm font-medium cursor-pointer">
+                                    <i class="ri-message-2-line ri-lg align-bottom mr-1"></i>
+                                    短信
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+                        <h4 class="font-medium mb-3">添加联系人</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">姓名</label>
+                                <input type="text" placeholder="请输入联系人姓名" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">关系</label>
+                                <select class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary appearance-none">
+                                    <option>配偶</option>
+                                    <option>子女</option>
+                                    <option>父母</option>
+                                    <option>朋友</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500 block mb-1">手机号码</label>
+                                <input type="tel" placeholder="请输入联系人手机号" class="w-full px-3 py-2 bg-gray-100 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-primary text-white py-3 rounded-button font-medium mb-4 cursor-pointer profile-to-level3" data-target="emergency">
+                        添加联系人
+                    </button>
+                </div>
+                
+                <div id="privacy-settings" class="profile-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+                
+                <div id="device-settings" class="profile-detail hidden">
+                    <!-- 类似内容，根据需要调整 -->
+                </div>
+            </div>
+            
+            <!-- 个人中心模块 - 三级界面 -->
+            <div id="profile-level-3" class="third-level px-4 py-3">
+                <div id="personal-success" class="profile-result">
+                    <div class="flex flex-col items-center justify-center h-[400px]">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="ri-check-line ri-3x text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-medium mb-2">保存成功</h3>
+                        <p class="text-gray-500 mb-6 text-center">您的个人信息已成功更新</p>
+                        <button class="w-full bg-primary text-white py-3 rounded-button font-medium cursor-pointer" id="back-to-profile">
+                            返回个人中心
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="emergency-success" class="profile-result hidden">
+                    <div class="flex flex-col items-center justify-center h-[400px]">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="ri-check-line ri-3x text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-medium mb-2">添加成功</h3>
+                        <p class="text-gray-500 mb-6 text-center">紧急联系人已成功添加</p>
+                        <button class="w-full bg-primary text-white py-3 rounded-button font-medium cursor-pointer" id="back-to-emergency">
+                            返回联系人管理
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部标签栏 -->
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 z-50">
+        <div class="grid grid-cols-5 h-16">
+            <button class="flex flex-col items-center justify-center cursor-pointer tab-button active" data-tab="navigation-tab">
+                <i class="ri-map-pin-line ri-lg text-primary"></i>
+                <span class="text-xs mt-1 text-primary">导航</span>
+            </button>
+            <button class="flex flex-col items-center justify-center cursor-pointer tab-button" data-tab="safety-tab">
+                <i class="ri-shield-line ri-lg text-gray-500"></i>
+                <span class="text-xs mt-1 text-gray-500">安全</span>
+            </button>
+            <button class="flex flex-col items-center justify-center cursor-pointer tab-button" data-tab="health-tab">
+                <i class="ri-heart-pulse-line ri-lg text-gray-500"></i>
+                <span class="text-xs mt-1 text-gray-500">健康</span>
+            </button>
+            <button class="flex flex-col items-center justify-center cursor-pointer tab-button" data-tab="medication-tab">
+                <i class="ri-medicine-bottle-line ri-lg text-gray-500"></i>
+                <span class="text-xs mt-1 text-gray-500">用药</span>
+            </button>
+            <button class="flex flex-col items-center justify-center cursor-pointer tab-button" data-tab="profile-tab">
+                <i class="ri-user-3-line ri-lg text-gray-500"></i>
+                <span class="text-xs mt-1 text-gray-500">我的</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 引入 ECharts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    
+    <!-- 标签页切换 -->
+    <script id="tab-switcher">
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 切换标签按钮样式
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.querySelector('i').classList.remove('text-primary');
+                        btn.querySelector('i').classList.add('text-gray-500');
+                        btn.querySelector('span').classList.remove('text-primary');
+                        btn.querySelector('span').classList.add('text-gray-500');
+                    });
+                    
+                    this.classList.add('active');
+                    this.querySelector('i').classList.remove('text-gray-500');
+                    this.querySelector('i').classList.add('text-primary');
+                    this.querySelector('span').classList.remove('text-gray-500');
+                    this.querySelector('span').classList.add('text-primary');
+                    
+                    // 切换内容区域
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // 重置到一级界面
+                    resetToFirstLevel();
+                });
+            });
+        });
+    </script>
+    
+    <!-- 返回按钮功能 -->
+    <script id="back-button-handler">
+        document.addEventListener('DOMContentLoaded', function() {
+            const backButton = document.getElementById('back-button');
+            
+            backButton.addEventListener('click', function() {
+                const activeTab = document.querySelector('.tab-content.active');
+                
+                if (activeTab.querySelector('.third-level').style.display === 'block') {
+                    // 从三级返回二级
+                    activeTab.querySelector('.third-level').style.display = 'none';
+                    activeTab.querySelector('.second-level').style.display = 'block';
+                } else if (activeTab.querySelector('.second-level').style.display === 'block') {
+                    // 从二级返回一级
+                    activeTab.querySelector('.second-level').style.display = 'none';
+                    activeTab.querySelector('.first-level').style.display = 'block';
+                    backButton.classList.add('hidden');
+                }
+            });
+        });
+        
+        function resetToFirstLevel() {
+            const backButton = document.getElementById('back-button');
+            backButton.classList.add('hidden');
+            
+            document.querySelectorAll('.first-level').forEach(el => {
+                el.style.display = 'block';
+            });
+            
+            document.querySelectorAll('.second-level, .third-level').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+    </script>
+    
+    <!-- 导航模块交互 -->
+    <script id="navigation-interaction">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一级到二级
+            const navToLevel2Buttons = document.querySelectorAll('.nav-to-level2');
+            navToLevel2Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('navigation-level-1').style.display = 'none';
+                    document.getElementById('navigation-level-2').style.display = 'block';
+                    document.getElementById('back-button').classList.remove('hidden');
+                    
+                    // 根据目标更新目的地信息
+                    if (target === 'home') {
+                        document.getElementById('destination-name').textContent = '家';
+                        document.getElementById('destination-address').textContent = '杭州市西湖区文一西路 98 号';
+                    } else if (target === 'work') {
+                        document.getElementById('destination-name').textContent = '公司';
+                        document.getElementById('destination-address').textContent = '杭州市余杭区五常街道';
+                    } else if (target === 'recent1') {
+                        document.getElementById('destination-name').textContent = '西湖风景区';
+                        document.getElementById('destination-address').textContent = '杭州市西湖区龙井路 1 号';
+                    } else if (target === 'recent2') {
+                        document.getElementById('destination-name').textContent = '杭州东站';
+                        document.getElementById('destination-address').textContent = '杭州市江干区天城东路';
+                    }
+                });
+            });
+            
+            // 二级到三级
+            const navToLevel3Buttons = document.querySelectorAll('.nav-to-level3');
+            navToLevel3Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    document.getElementById('navigation-level-2').style.display = 'none';
+                    document.getElementById('navigation-level-3').style.display = 'block';
+                });
+            });
+            
+            // 交通方式选择
+            const transportModes = document.querySelectorAll('.transport-mode');
+            transportModes.forEach(mode => {
+                mode.addEventListener('click', function() {
+                    transportModes.forEach(m => {
+                        m.querySelector('div').classList.remove('bg-primary/10');
+                        m.querySelector('div').classList.add('bg-gray-100');
+                        m.querySelector('i').classList.remove('text-primary');
+                        m.querySelector('i').classList.add('text-gray-600');
+                    });
+                    
+                    this.querySelector('div').classList.remove('bg-gray-100');
+                    this.querySelector('div').classList.add('bg-primary/10');
+                    this.querySelector('i').classList.remove('text-gray-600');
+                    this.querySelector('i').classList.add('text-primary');
+                });
+            });
+        });
+    </script>
+    
+    <!-- 安全模块交互 -->
+    <script id="safety-interaction">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一级到二级
+            const safetyToLevel2Buttons = document.querySelectorAll('.safety-to-level2');
+            safetyToLevel2Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('safety-level-1').style.display = 'none';
+                    document.getElementById('safety-level-2').style.display = 'block';
+                    document.getElementById('back-button').classList.remove('hidden');
+                    
+                    // 显示对应的警告详情
+                    document.querySelectorAll('.warning-detail').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-warning').classList.remove('hidden');
+                });
+            });
+            
+            // 二级到三级
+            const safetyToLevel3Buttons = document.querySelectorAll('.safety-to-level3');
+            safetyToLevel3Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('safety-level-2').style.display = 'none';
+                    document.getElementById('safety-level-3').style.display = 'block';
+                    
+                    // 显示对应的安全路线
+                    document.querySelectorAll('.safe-route').forEach(route => {
+                        route.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-safe-route').classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+    
+    <!-- 健康模块交互 -->
+    <script id="health-interaction">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一级到二级
+            const healthToLevel2Buttons = document.querySelectorAll('.health-to-level2');
+            healthToLevel2Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('health-level-1').style.display = 'none';
+                    document.getElementById('health-level-2').style.display = 'block';
+                    document.getElementById('back-button').classList.remove('hidden');
+                    
+                    // 显示对应的健康详情
+                    document.querySelectorAll('.health-detail').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-detail').classList.remove('hidden');
+                    
+                    // 初始化图表
+                    if (target === 'heart') {
+                        initHeartChart();
+                    } else if (target === 'blood') {
+                        initBloodChart();
+                    }
+                });
+            });
+            
+            // 二级到三级
+            const healthToLevel3Buttons = document.querySelectorAll('.health-to-level3');
+            healthToLevel3Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('health-level-2').style.display = 'none';
+                    document.getElementById('health-level-3').style.display = 'block';
+                    
+                    // 显示对应的健康分析
+                    document.querySelectorAll('.health-analysis').forEach(analysis => {
+                        analysis.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-analysis').classList.remove('hidden');
+                    
+                    // 初始化分析图表
+                    if (target === 'heart') {
+                        initHeartAnalysisChart();
+                    }
+                });
+            });
+            
+            // 心率图表初始化
+            function initHeartChart() {
+                const chartDom = document.getElementById('heart-chart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        top: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: ['6:00', '8:00', '10:00', '12:00', '14:00', '16:00', '18:00', '现在'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        },
+                        axisLabel: {
+                            show: false
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 50,
+                        max: 100,
+                        axisLine: {
+                            show: false
+                        },
+                        axisLabel: {
+                            show: false
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#f5f5f5'
+                            }
+                        }
+                    },
+                    series: [{
+                        data: [65, 68, 72, 75, 70, 68, 72, 72],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#ef4444',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#ef4444'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0,
+                                    color: 'rgba(239, 68, 68, 0.3)'
+                                }, {
+                                    offset: 1,
+                                    color: 'rgba(239, 68, 68, 0.1)'
+                                }]
+                            }
+                        }
+                    }]
+                };
+                myChart.setOption(option);
+            }
+            
+            // 血压图表初始化
+            function initBloodChart() {
+                const chartDom = document.getElementById('blood-chart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        top: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        },
+                        axisLabel: {
+                            show: false
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 60,
+                        max: 140,
+                        axisLine: {
+                            show: false
+                        },
+                        axisLabel: {
+                            show: false
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#f5f5f5'
+                            }
+                        }
+                    },
+                    series: [{
+                        name: '收缩压',
+                        data: [122, 125, 120, 118, 125, 122, 120],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#3b82f6',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#3b82f6'
+                        }
+                    }, {
+                        name: '舒张压',
+                        data: [82, 85, 80, 78, 82, 80, 80],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#10b981',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#10b981'
+                        }
+                    }]
+                };
+                myChart.setOption(option);
+            }
+            
+            // 心率分析图表初始化
+            function initHeartAnalysisChart() {
+                const chartDom = document.getElementById('heart-analysis-chart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        top: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: ['1周前', '6天前', '5天前', '4天前', '3天前', '2天前', '昨天', '今天'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 50,
+                        max: 100,
+                        axisLine: {
+                            show: false
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#f5f5f5'
+                            }
+                        }
+                    },
+                    series: [{
+                        name: '平均心率',
+                        data: [68, 65, 70, 67, 65, 66, 68, 65],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#4F46E5',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#4F46E5'
+                        },
+                        markArea: {
+                            itemStyle: {
+                                color: 'rgba(79, 70, 229, 0.1)'
+                            },
+                            data: [
+                                [{
+                                    yAxis: 60
+                                }, {
+                                    yAxis: 70
+                                }]
+                            ]
+                        }
+                    }]
+                };
+                myChart.setOption(option);
+            }
+            
+            // 开关按钮交互
+            const toggleSwitches = document.querySelectorAll('input[type="checkbox"]');
+            toggleSwitches.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    if (this.checked) {
+                        this.nextElementSibling.querySelector('span').style.transform = 'translateX(100%)';
+                        this.nextElementSibling.style.backgroundColor = '#4F46E5';
+                    } else {
+                        this.nextElementSibling.querySelector('span').style.transform = 'translateX(0)';
+                        this.nextElementSibling.style.backgroundColor = '#d1d5db';
+                    }
+                });
+                
+                // 初始状态设置
+                if (toggle.checked) {
+                    toggle.nextElementSibling.querySelector('span').style.transform = 'translateX(100%)';
+                    toggle.nextElementSibling.style.backgroundColor = '#4F46E5';
+                }
+            });
+        });
+    </script>
+    
+    <!-- 用药模块交互 -->
+    <script id="medication-interaction">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一级到二级
+            const medicationToLevel2Buttons = document.querySelectorAll('.medication-to-level2');
+            medicationToLevel2Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('medication-level-1').style.display = 'none';
+                    document.getElementById('medication-level-2').style.display = 'block';
+                    document.getElementById('back-button').classList.remove('hidden');
+                    
+                    // 显示对应的药品详情
+                    document.querySelectorAll('.medication-detail').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-detail').classList.remove('hidden');
+                });
+            });
+            
+            // 二级到三级
+            const medicationToLevel3Buttons = document.querySelectorAll('.medication-to-level3');
+            medicationToLevel3Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('medication-level-2').style.display = 'none';
+                    document.getElementById('medication-level-3').style.display = 'block';
+                    
+                    // 显示对应的药品分析
+                    document.querySelectorAll('.medication-analysis').forEach(analysis => {
+                        analysis.classList.add('hidden');
+                    });
+                    document.getElementById(target + '-analysis').classList.remove('hidden');
+                    
+                    // 初始化药品图表
+                    initMedicationChart();
+                });
+            });
+            
+            // 药品图表初始化
+            function initMedicationChart() {
+                const chartDom = document.getElementById('medication-chart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        top: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['4周前', '3周前', '2周前', '上周', '本周'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        }
+                    },
+                    yAxis: [{
+                        type: 'value',
+                        name: '服药依从率',
+                        min: 0,
+                        max: 100,
+                        axisLine: {
+                            show: false
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#f5f5f5'
+                            }
+                        }
+                    }, {
+                        type: 'value',
+                        name: '血压值',
+                        min: 100,
+                        max: 140,
+                        axisLine: {
+                            show: false
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    }],
+                    series: [{
+                        name: '服药依从率',
+                        data: [92, 94, 98, 100, 96],
+                        type: 'bar',
+                        barWidth: '40%',
+                        itemStyle: {
+                            color: '#4F46E5'
+                        }
+                    }, {
+                        name: '平均血压',
+                        data: [128, 125, 122, 120, 120],
+                        type: 'line',
+                        yAxisIndex: 1,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#10b981',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#10b981'
+                        }
+                    }]
+                };
+                myChart.setOption(option);
+            }
+        });
+    </script>
+    
+    <!-- 个人中心模块交互 -->
+    <script id="profile-interaction">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 一级到二级
+            const profileToLevel2Buttons = document.querySelectorAll('.profile-to-level2');
+            profileToLevel2Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('profile-level-1').style.display = 'none';
+                    document.getElementById('profile-level-2').style.display = 'block';
+                    document.getElementById('back-button').classList.remove('hidden');
+                    
+                    // 显示对应的个人信息详情
+                    document.querySelectorAll('.profile-detail').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    
+                    if (target === 'personal') {
+                        document.getElementById('personal-info').classList.remove('hidden');
+                    } else if (target === 'emergency') {
+                        document.getElementById('emergency-contacts').classList.remove('hidden');
+                    } else if (target === 'privacy') {
+                        document.getElementById('privacy-settings').classList.remove('hidden');
+                    } else if (target === 'device') {
+                        document.getElementById('device-settings').classList.remove('hidden');
+                    }
+                });
+            });
+            
+            // 二级到三级
+            const profileToLevel3Buttons = document.querySelectorAll('.profile-to-level3');
+            profileToLevel3Buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    document.getElementById('profile-level-2').style.display = 'none';
+                    document.getElementById('profile-level-3').style.display = 'block';
+                    
+                    // 显示对应的结果页面
+                    document.querySelectorAll('.profile-result').forEach(result => {
+                        result.classList.add('hidden');
+                    });
+                    
+                    if (target === 'personal') {
+                        document.getElementById('personal-success').classList.remove('hidden');
+                    } else if (target === 'emergency') {
+                        document.getElementById('emergency-success').classList.remove('hidden');
+                    }
+                });
+            });
+            
+            // 返回按钮
+            document.getElementById('back-to-profile').addEventListener('click', function() {
+                document.getElementById('profile-level-3').style.display = 'none';
+                document.getElementById('profile-level-1').style.display = 'block';
+                document.getElementById('back-button').classList.add('hidden');
+            });
+            
+            document.getElementById('back-to-emergency').addEventListener('click', function() {
+                document.getElementById('profile-level-3').style.display = 'none';
+                document.getElementById('profile-level-2').style.display = 'block';
+                document.getElementById('emergency-contacts').classList.remove('hidden');
+            });
+        });
+    </script>
+    
+    <!-- 紧急求助按钮交互 -->
+    <script id="emergency-button">
+        document.addEventListener('DOMContentLoaded', function() {
+            const emergencyButton = document.querySelector('.emergency-button');
+            
+            emergencyButton.addEventListener('click', function() {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg p-4 w-[300px] mx-auto">
+                        <div class="text-center mb-4">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="ri-alarm-warning-line ri-2x text-red-600"></i>
+                            </div>
+                            <h3 class="text-xl font-medium">紧急求助</h3>
+                            <p class="text-gray-500 mt-1">确定要发送紧急求助信息吗？</p>
+                        </div>
+                        <div class="space-y-3">
+                            <button id="confirm-emergency" class="w-full bg-red-500 text-white py-3 rounded-button font-medium">
+                                确认求助
+                            </button>
+                            <button id="cancel-emergency" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-button font-medium">
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                document.getElementById('confirm-emergency').addEventListener('click', function() {
+                    modal.innerHTML = `
+                        <div class="bg-white rounded-lg p-4 w-[300px] mx-auto">
+                            <div class="text-center mb-4">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="ri-check-line ri-2x text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-medium">求助已发送</h3>
+                                <p class="text-gray-500 mt-1">已通知您的紧急联系人，请保持冷静</p>
+                            </div>
+                            <button id="close-emergency" class="w-full bg-primary text-white py-3 rounded-button font-medium">
+                                确定
+                            </button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('close-emergency').addEventListener('click', function() {
+                        document.body.removeChild(modal);
+                    });
+                });
+                
+                document.getElementById('cancel-emergency').addEventListener('click', function() {
+                    document.body.removeChild(modal);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
